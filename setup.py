@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='simple-observers',
-    version='0.1.0',
+    version='0.1.1',
     description='Twisted logging without decorations',
     long_description='Observers for twisted logging that produces log messages without decorations',
     url='https://github.com/wrapp/simple-observers',
