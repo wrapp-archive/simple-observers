@@ -14,3 +14,6 @@ Example usage with `twistd`
 $ twistd --logger simple_observers.SimpleStdoutLogger -n web
 
 ```
+
+This will log everything to stdout. If you want to preserve stderr you can use
+`simple_observers.SimpleStreamLogger`.

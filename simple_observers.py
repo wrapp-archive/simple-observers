@@ -1,11 +1,11 @@
-from sys import stdout
+from sys import stdout, stderr
 from twisted.python import log, util
 
 
 class SimpleFileObserver(object):
-    def __init__(self, f):
-        self.write = f.write
-        self.flush = f.flush
+    def __init__(self, out, err):
+        self.out = out
+        self.err = err
 
     def emit(self, eventDict):
         text = log.textFromEventDict(eventDict)
@@ -14,8 +14,13 @@ class SimpleFileObserver(object):
 
         text = text.replace("\n", "\n\t")
 
-        util.untilConcludes(self.write, text + '\n')
-        util.untilConcludes(self.flush)
+        if eventDict.get('isError'):
+            f = self.err
+        else:
+            f = self.out
+
+        util.untilConcludes(f.write, text + '\n')
+        util.untilConcludes(f.flush)
 
     def start(self):
         """
@@ -31,4 +36,10 @@ class SimpleFileObserver(object):
 
 
 def SimpleStdoutLogger():
-    return SimpleFileObserver(stdout).emit
+    ''' Writes everything to stdout. '''
+    return SimpleFileObserver(stdout, stdout).emit
+
+
+def SimpleStreamLogger():
+    ''' Writes output to stdout and errors to stderr. '''
+    return SimpleFileObserver(stdout, stderr).emit
