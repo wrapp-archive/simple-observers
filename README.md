@@ -17,3 +17,7 @@ $ twistd --logger simple_observers.SimpleStdoutLogger -n web
 
 This will log everything to stdout. If you want to preserve stderr you can use
 `simple_observers.SimpleStreamLogger`.
+
+There are also KeyValue varieties like `KeyValueStdoutLogger` and
+`KeyValueStreamLogger`. These will attempt to encode messages in structured
+[logfmt](https://brandur.org/logfmt).
