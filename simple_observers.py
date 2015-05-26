@@ -75,7 +75,14 @@ class KeyValueFileObserver(SimpleFileObserver):
         util.untilConcludes(f.flush)
 
     def format_kv(self, system=None, time=None, message=None, isError=False,
-            failure=None, printed=None, **data):
+            failure=None, printed=None, format=None, log_io=None, **data):
+
+        # Message can either be message or log_io
+        message = message or [log_io]
+
+        # Remove everything else that's prefixed with log_.
+        data = {k: v for k, v in data.items() if not k.startswith('log_')}
+
         out = []
 
         if isError:
