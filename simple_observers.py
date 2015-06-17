@@ -78,10 +78,12 @@ class KeyValueFileObserver(SimpleFileObserver):
         exc_type = failure and '%s.%s' % (failure.type.__module__, failure.type.__name__)
         exc_value = failure and failure.getErrorMessage()
 
-        msg = log_format.format(**event)
+        msg = log_format and log_format.format(**event)
         message = event.pop('message')
         if failure:
             msg = message if message else '%s: %s' % (exc_type, exc_value)
+        if not msg:
+            msg = message
 
         out = []
 
