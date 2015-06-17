@@ -2,7 +2,7 @@ import json
 import sys
 
 from twisted.python import log, util
-
+from twisted.logger import formatEvent
 
 
 class SimpleFileObserver(object):
@@ -58,48 +58,37 @@ class KeyValueFileObserver(SimpleFileObserver):
 
     '''
 
-    def emit(self, eventDict):
+    def emit(self, event):
+        is_error = event.get('isError', False)
         try:
-            text = self.format_kv(**eventDict)
+            text = self.format_kv(event)
         except Exception, e:
-            # Fallback to safe operation
             text = 'Parse error: %s. Original message: %s' % \
-                    (repr(e), log.textFromEventDict(eventDict))
+                    (repr(e), formatEvent(event))
+            is_error = True
 
-        if eventDict.get('isError'):
-            f = self.err
-        else:
-            f = self.out
+        f = self.err if is_error else self.out
 
         util.untilConcludes(f.write, text + '\n')
         util.untilConcludes(f.flush)
 
-    def format_kv(self, system=None, time=None, message=None, isError=False,
-            failure=None, printed=None, format=None, log_io=None, **data):
+    def format_kv(self, event):
+        log_format = event.pop('log_format', None)
+        failure = event.pop('failure', None)
+        exc_type = failure and '%s.%s' % (failure.type.__module__, failure.type.__name__)
+        exc_value = failure and failure.getErrorMessage()
 
-        # Message can either be message or log_io
-        message = message or [log_io]
-
-        # Remove everything else that's prefixed with log_.
-        data = {k: v for k, v in data.items() if not k.startswith('log_')}
+        msg = log_format.format(**event)
+        message = event.pop('message')
+        if failure:
+            msg = message if message else '%s: %s' % (exc_type, exc_value)
 
         out = []
 
-        if isError:
+        if event.get('isError'):
             level = 'error'
         else:
             level = 'info'
-
-        if failure:
-            exc_type = '%s.%s' % (failure.type.__module__, failure.type.__name__)
-            exc_value = failure.getErrorMessage()
-
-        if message:
-            msg = message[0]
-        elif failure:
-            msg = '%s: %s' % (exc_type, exc_value)
-        else:
-            msg = None
 
         out = [
             ('level', level),
@@ -112,7 +101,15 @@ class KeyValueFileObserver(SimpleFileObserver):
                 ('exc_value', exc_value),
             ])
 
-        out.extend(sorted(data.items()))
+        # Remove everything else that's prefixed with log_.
+        event = {k: v for k, v in event.items() if not k.startswith('log_')}
+        event.pop('message', None)
+        event.pop('system', None)
+        event.pop('format', None)
+        event.pop('time', None)
+        event.pop('isError', None)
+        event.pop('failure', None)
+        out.extend(sorted(event.items()))
 
         return ' '.join(["%s=%s" % (k, json.dumps(v)) for (k, v) in out if not self.is_complex(v)])
 

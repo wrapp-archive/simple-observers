@@ -87,8 +87,7 @@ class TestKeyValueFileObserver(object):
     def test_error_while_formatting(self):
         with patch.object(self.observer, 'format_kv', side_effect=ValueError):
             log.msg('hello')
-        assert read(self.out) == 'Parse error: ValueError(). Original message: hello\n'
-
+        assert read(self.err) == 'Parse error: ValueError(). Original message: hello\n'
 
 
 
